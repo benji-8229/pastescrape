@@ -36,7 +36,7 @@ with open(keywords_path, "r") as f:
 	keywords = [keyword.strip("\n") for keyword in f.readlines()]
 	if keywords == []:
 		print("[!] KEYWORD FILE EMPTY! Closing program.")
-	sys.exit()
+	exit()
 
 with open(agents_path, "r") as f:
 	request_agents = [agent.strip("\n") for agent in f.readlines()]
