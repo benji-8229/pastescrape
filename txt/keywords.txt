@@ -1,0 +1,8 @@
+gun
+murder
+kidney
+keylogger
+Invoke-WebRequest
+DownloadString
+Net.WebClient
+powershell
