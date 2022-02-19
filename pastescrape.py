@@ -3,6 +3,7 @@ import requests, time, random
 from bs4 import BeautifulSoup
 from pathlib import Path
 from os import path
+from sys import exit
 
 raw_paste_url = "https://www.pastebin.com/raw"
 request_url = "https://www.pastebin.com/archive"
@@ -35,6 +36,7 @@ with open(keywords_path, "r") as f:
 	keywords = [keyword.strip("\n") for keyword in f.readlines()]
 	if keywords == []:
 		print("[!] KEYWORD FILE EMPTY! Closing program.")
+	sys.exit()
 
 with open(agents_path, "r") as f:
 	request_agents = [agent.strip("\n") for agent in f.readlines()]
@@ -50,7 +52,7 @@ try:
 	requests.head("https://www.google.com", timeout=5)
 except requests.ConnectionError:
 	print("[!] No internet connection, closing.")
-	quit()
+	exit()
 
 request = requests.get(request_url,
 			headers={"User-Agent": random.choice(request_agents)})
