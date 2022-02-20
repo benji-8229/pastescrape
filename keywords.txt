@@ -1,12 +1,40 @@
+#sensitive info
 gmail
 username
 user
 password
-passwd
-gun
-Mono
+pass
+token
+secret
+address
+#potentially malicious
 powershell
 invoke
 download
 token
 secret
+new-object
+.exe
+.ps
+base64
+shell
+keylog
+dos
+ddos
+#illegal
+drug
+gun
+adderall
+xanax
+weed
+shroom
+molly
+cocaine
+coke
+#hobby / interest
+monobehaviour
+shader
+gpio
+pin
+arduino
+menu

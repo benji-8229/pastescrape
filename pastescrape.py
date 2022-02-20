@@ -10,19 +10,19 @@ request_url = "https://www.pastebin.com/archive"
 
 #file paths that will be used
 file_path = Path(__file__).resolve().parent
-log_path = file_path / Path("log.txt")
+log_path = file_path / Path("saves/log.txt")
 agents_path = file_path / Path("agents.txt")
 keywords_path = file_path / Path("keywords.txt")
 parsed_path = file_path / Path("parsed.txt")
 saves = file_path / Path("saves")
 
 #im so lazy :)
+if saves.exist() == False:
+	saves.mkdir()
 log_path.touch(exist_ok=True)
 agents_path.touch(exist_ok=True)
 keywords_path.touch(exist_ok=True)
 parsed_path.touch(exist_ok=True)
-if saves.exists() == False:
-	saves.mkdir()
 
 def write(path, mode, text):
 	with open(path, mode) as file:
@@ -71,7 +71,9 @@ for link in table.find_all("a"):
 
 	current_paste = requests.get(raw_paste_url + paste,
 			headers={"User-Agent": random.choice(request_agents)})
-
+	
+	#for every keyword in our list, check if it's in the current paste.
+	#if it is, save the paste and move to the next paste in the loop.
 	for keyword in keywords:
 		if keyword.lower() in current_paste.text.lower():
 			write(log_path, "a+", "[{0}] Keyword > {1} < found in {2}!\n".format(
@@ -83,7 +85,7 @@ for link in table.find_all("a"):
 				write(log_path, "a+", "[{0] Making {1}...\n".format(
 							time.strftime("%Y-%m-%d"), dated_path))
 
-			with open(dated_path / Path(paste[1:] + ".txt"), "a+") as f:
+			with open(dated_path / Path(paste[1:] + ".txt"), "w+") as f:
 				f.write("[*] KEYWORD < {0} >\n".format(keyword))
 				f.write("-"*20 + "\n")
 				f.write(current_paste.text)
