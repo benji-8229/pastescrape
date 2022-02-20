@@ -10,6 +10,7 @@ request_url = "https://www.pastebin.com/archive"
 
 file_path = Path(__file__).resolve().parent
 txt_path = file_path / Path("txt")
+log_path = file_path / Path("txt/log.txt")
 agents_path = file_path / Path("txt/agents.txt")
 keywords_path = file_path / Path("txt/keywords.txt")
 parsed_pastes_path = file_path / Path("txt/parsed_pastes.txt")
@@ -31,12 +32,15 @@ if parsed_pastes_path.exists() == False:
 if saved_pastes_path.exists() == False:
 	print("[*] Creating saved_pastes/...")
 	saved_pastes_path.mkdir()
+if log_path.exists() == False:
+	print("[*] Creating txt/log.txt...")
+	with open("log.txt", "w") as f: pass
 
 with open(keywords_path, "r") as f:
 	keywords = [keyword.strip("\n") for keyword in f.readlines()]
 	if keywords == []:
 		print("[!] KEYWORD FILE EMPTY! Closing program.")
-	exit()
+		exit()
 
 with open(agents_path, "r") as f:
 	request_agents = [agent.strip("\n") for agent in f.readlines()]
@@ -61,6 +65,9 @@ soup = BeautifulSoup(request.text, "html.parser")
 table = soup.find("div", class_="archive-table")
 links = []
 
+with open(log_path, "a") as f:
+	f.write(time.strftime("[*] Starting scrape on %Y-%m-%d, %H:%M:%S...\n"))
+
 for link in table.find_all("a"):
 	paste = link.get("href")
 
@@ -68,17 +75,20 @@ for link in table.find_all("a"):
 	if paste in parsed_pastes: continue
 	#Discard worthless links and pastes that are in parsed_pastes
 
-	with open(parsed_pastes_path, "r+") as f:
+	with open(parsed_pastes_path, "a") as f:
 		f.write(paste + "\n")
 	#Add new pastes to parsed_pastes
 
-	print("[*] Reading {0}...".format(paste))
+	with open(log_path, "a") as f:
+		f.write("[*] Reading {0}...\n".format(paste))
+
 	current_paste = requests.get(raw_paste_url + paste,
 			headers={"User-Agent": random.choice(request_agents)})
 
 	for keyword in keywords:
 		if keyword.lower() in current_paste.text.lower():
-			print("[*] Found >{0}< in paste {1}! Saving...".format(
+			with open(log_path, "a") as f:
+				f.write("[*] Found > {0} < in paste {1}! Saving...\n".format(
 			keyword, paste))
 
 			dated_path = saved_pastes_path / time.strftime("%Y-%m-%d")
@@ -87,5 +97,7 @@ for link in table.find_all("a"):
 				print("[*] Making {0}...".format(dated_path))
 
 			with open(dated_path / Path(paste[1:] + ".txt"), "a+") as f:
+				f.write("[*] KEYWORD < {0} >\n".format(keyword))
+				f.write("-"*20 + "\n")
 				f.write(current_paste.text)
 			break
