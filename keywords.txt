@@ -1,7 +1,6 @@
 #sensitive info
 gmail
 username
-user
 password
 pass
 token
@@ -38,3 +37,4 @@ gpio
 pin
 arduino
 menu
+commission

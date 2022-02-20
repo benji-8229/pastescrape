@@ -17,7 +17,7 @@ parsed_path = file_path / Path("parsed.txt")
 saves = file_path / Path("saves")
 
 #im so lazy :)
-if saves.exist() == False:
+if saves.exists() == False:
 	saves.mkdir()
 log_path.touch(exist_ok=True)
 agents_path.touch(exist_ok=True)
@@ -31,7 +31,6 @@ def write(path, mode, text):
 #split keywords file into a list, close if it's empty.
 with open(keywords_path, "r+") as f:
 	keywords = [keyword.strip("\n") for keyword in f.readlines()]
-
 	if keywords == []:
 		write(log_path, "a+", time.strftime("[%Y-%m-%d] Keywords file empty, closing.\n"))
 		exit()
@@ -71,18 +70,18 @@ for link in table.find_all("a"):
 
 	current_paste = requests.get(raw_paste_url + paste,
 			headers={"User-Agent": random.choice(request_agents)})
-	
+
 	#for every keyword in our list, check if it's in the current paste.
 	#if it is, save the paste and move to the next paste in the loop.
 	for keyword in keywords:
 		if keyword.lower() in current_paste.text.lower():
-			write(log_path, "a+", "[{0}] Keyword > {1} < found in {2}!\n".format(
+			write(log_path, "a+", "[{0}] Keyword < {1} > found in {2}!\n".format(
 						time.strftime("%Y-%m-%d"), keyword, paste))
 
 			dated_path = saves / time.strftime("%Y-%m-%d")
 			if dated_path.exists() == False:
 				dated_path.mkdir()
-				write(log_path, "a+", "[{0] Making {1}...\n".format(
+				write(log_path, "a+", "[{0}] Making {1}...\n".format(
 							time.strftime("%Y-%m-%d"), dated_path))
 
 			with open(dated_path / Path(paste[1:] + ".txt"), "w+") as f:
