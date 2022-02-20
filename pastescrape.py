@@ -8,93 +8,80 @@ from sys import exit
 raw_paste_url = "https://www.pastebin.com/raw"
 request_url = "https://www.pastebin.com/archive"
 
+#file paths that will be used
 file_path = Path(__file__).resolve().parent
-txt_path = file_path / Path("txt")
-log_path = file_path / Path("txt/log.txt")
-agents_path = file_path / Path("txt/agents.txt")
-keywords_path = file_path / Path("txt/keywords.txt")
-parsed_pastes_path = file_path / Path("txt/parsed_pastes.txt")
-saved_pastes_path = file_path / Path("saved_pastes")
+log_path = file_path / Path("log.txt")
+agents_path = file_path / Path("agents.txt")
+keywords_path = file_path / Path("keywords.txt")
+parsed_path = file_path / Path("parsed.txt")
+saves = file_path / Path("saves")
 
-#Create any dir / files if needed
-if txt_path.exists() == False:
-	print("[*] Creating txt/...")
-	txt_path.mkdir()
-if keywords_path.exists() == False:
-	print("[*] Creating txt/keywords.txt...")
-	with open(keywords_path, "w") as f: pass
-if agents_path.exists() == False:
-	print("[*] Creating txt/agents.txt...")
-	with open(agents_path, "w") as f: pass
-if parsed_pastes_path.exists() == False:
-	print("[*] Creating txt/parsed_pastes.txt...")
-	with open(parsed_pastes_path, "w") as f: pass
-if saved_pastes_path.exists() == False:
-	print("[*] Creating saved_pastes/...")
-	saved_pastes_path.mkdir()
-if log_path.exists() == False:
-	print("[*] Creating txt/log.txt...")
-	with open("log.txt", "w") as f: pass
+#im so lazy :)
+log_path.touch(exist_ok=True)
+agents_path.touch(exist_ok=True)
+keywords_path.touch(exist_ok=True)
+parsed_path.touch(exist_ok=True)
+if saves.exists() == False:
+	saves.mkdir()
 
-with open(keywords_path, "r") as f:
+def write(path, mode, text):
+	with open(path, mode) as file:
+		file.write(text)
+
+#split keywords file into a list, close if it's empty.
+with open(keywords_path, "r+") as f:
 	keywords = [keyword.strip("\n") for keyword in f.readlines()]
+
 	if keywords == []:
-		print("[!] KEYWORD FILE EMPTY! Closing program.")
+		write(log_path, "a+", time.strftime("[%Y-%m-%d] Keywords file empty, closing.\n"))
 		exit()
 
-with open(agents_path, "r") as f:
+with open(agents_path, "r+") as f:
 	request_agents = [agent.strip("\n") for agent in f.readlines()]
-	#Using random user-agents to avoid our ip being blocked
+	#Using random user-agents to keep our ip from being blocked
 	#This wouldn't be a problem if I were allowed to use the
 	#scraping API, but that's limited to Pro users. And I
 	#would become a pro user, but they're "sold out"?
 
-with open(parsed_pastes_path, "r") as f:
+#get a list of the pastes we've already read
+with open(parsed_path, "r+") as f:
 	parsed_pastes = [paste.strip("\n") for paste in f.readlines()]
 
+#check to make sure there is internet
 try:
 	requests.head("https://www.google.com", timeout=5)
 except requests.ConnectionError:
-	print("[!] No internet connection, closing.")
+	write(log_path, "a+", time.strftime("[%Y-%m-%d] No internet connection, closing.\n"))
 	exit()
 
-request = requests.get(request_url,
-			headers={"User-Agent": random.choice(request_agents)})
-
+#request the recent public pastes, and parse the html
+request = requests.get(request_url, headers={"User-Agent": random.choice(request_agents)})
 soup = BeautifulSoup(request.text, "html.parser")
 table = soup.find("div", class_="archive-table")
-links = []
 
-with open(log_path, "a") as f:
-	f.write(time.strftime("[*] Starting scrape on %Y-%m-%d, %H:%M:%S...\n"))
-
+write(log_path, "a+", time.strftime("[%Y-%m-%d] Starting scrape.\n"))
 for link in table.find_all("a"):
 	paste = link.get("href")
 
 	if paste.startswith("/archive"): continue
 	if paste in parsed_pastes: continue
-	#Discard worthless links and pastes that are in parsed_pastes
 
-	with open(parsed_pastes_path, "a") as f:
-		f.write(paste + "\n")
-	#Add new pastes to parsed_pastes
-
-	with open(log_path, "a") as f:
-		f.write("[*] Reading {0}...\n".format(paste))
+	write(parsed_path, "a+", paste + "\n")
+	write(log_path, "a+", time.strftime("[%Y-%m-%d] Reading " + paste + ".\n"))
 
 	current_paste = requests.get(raw_paste_url + paste,
 			headers={"User-Agent": random.choice(request_agents)})
 
 	for keyword in keywords:
 		if keyword.lower() in current_paste.text.lower():
-			with open(log_path, "a") as f:
-				f.write("[*] Found > {0} < in paste {1}! Saving...\n".format(
-			keyword, paste))
+			write(log_path, "a+", "[{0}] Keyword > {1} < found in {2}!\n".format(
+						time.strftime("%Y-%m-%d"), keyword, paste))
 
-			dated_path = saved_pastes_path / time.strftime("%Y-%m-%d")
+			dated_path = saves / time.strftime("%Y-%m-%d")
 			if dated_path.exists() == False:
 				dated_path.mkdir()
-				print("[*] Making {0}...".format(dated_path))
+				write(log_path, "a+", "[{0] Making {1}...\n".format(
+							time.strftime("%Y-%m-%d"), dated_path))
 
 			with open(dated_path / Path(paste[1:] + ".txt"), "a+") as f:
 				f.write("[*] KEYWORD < {0} >\n".format(keyword))

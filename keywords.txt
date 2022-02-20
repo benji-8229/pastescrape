@@ -1,0 +1,9 @@
+gmail
+username
+user
+password
+passwd
+gun
+Mono
+powershell
+invoke-
