@@ -1,8 +1,7 @@
 #!/usr/bin/python3
-import requests, time, random
+import requests, time, random, json
 from bs4 import BeautifulSoup
 from pathlib import Path
-from os import path
 from sys import exit
 
 raw_paste_url = "https://www.pastebin.com/raw"
@@ -11,46 +10,53 @@ request_url = "https://www.pastebin.com/archive"
 #file paths that will be used
 file_path = Path(__file__).resolve().parent
 log_path = file_path / Path("saves/log.txt")
-agents_path = file_path / Path("agents.txt")
-keywords_path = file_path / Path("keywords.txt")
-parsed_path = file_path / Path("parsed.txt")
+conf_path = file_path / Path("config.conf")
+parsed_path = file_path / Path(".parsed.txt")
 saves = file_path / Path("saves")
 
 #im so lazy :)
 if saves.exists() == False:
 	saves.mkdir()
 log_path.touch(exist_ok=True)
-agents_path.touch(exist_ok=True)
-keywords_path.touch(exist_ok=True)
+conf_path.touch(exist_ok=True)
 parsed_path.touch(exist_ok=True)
 
 def write(path, mode, text):
 	with open(path, mode) as file:
 		file.write(text)
 
-#split keywords file into a list, close if it's empty.
-with open(keywords_path, "r+") as f:
-	keywords = [keyword.strip("\n") for keyword in f.readlines()]
-	if keywords == []:
-		write(log_path, "a+", time.strftime("[%Y-%m-%d] Keywords file empty, closing.\n"))
-		exit()
+#organize logs a bit
+write(log_path, "a+", "-" * 30 + "\n")
+write(log_path, "a+", time.strftime("\n[%D] Running pastescrape.py...\n"))
 
-with open(agents_path, "r+") as f:
-	request_agents = [agent.strip("\n") for agent in f.readlines()]
-	#Using random user-agents to keep our ip from being blocked
-	#This wouldn't be a problem if I were allowed to use the
-	#scraping API, but that's limited to Pro users. And I
-	#would become a pro user, but they're "sold out"?
+try:
+	conf_data = json.load(conf_path.open("r"))
+except ValueError:
+	#conf file empty, add fields and close
+	json.dump({"user_agents": [], "keywords": []}, conf_path.open("w+"))
+	write(log_path, "a+", time.strftime("[%T] Config file empty, closing...\n"))
+	exit()
 
-#get a list of the pastes we've already read
+keywords = conf_data["keywords"]
+if keywords == []:
+	write(log_path, "a+", time.strftime("[%T] Keywords file empty, closing.\n"))
+	exit()
+
+#I understand it doesn't look great to be using random user agents
+#to avoid being blocked. I would much rather use PasteBin's scraping
+#API, but that's for pro accounts. And they are "sold out" of those???
+request_agents = conf_data["user_agents"]
+
+#get a set of the pastes we've already read
+#use a set because the contains check is O(1) instead of O(n)
 with open(parsed_path, "r+") as f:
-	parsed_pastes = [paste.strip("\n") for paste in f.readlines()]
+	parsed_pastes = set([paste.strip("\n") for paste in f.readlines()])
 
 #check to make sure there is internet
 try:
 	requests.head("https://www.google.com", timeout=5)
 except requests.ConnectionError:
-	write(log_path, "a+", time.strftime("[%Y-%m-%d] No internet connection, closing.\n"))
+	write(log_path, "a+", time.strftime("[%T] No internet connection, closing.\n"))
 	exit()
 
 #request the recent public pastes, and parse the html
@@ -58,7 +64,7 @@ request = requests.get(request_url, headers={"User-Agent": random.choice(request
 soup = BeautifulSoup(request.text, "html.parser")
 table = soup.find("div", class_="archive-table")
 
-write(log_path, "a+", time.strftime("[%Y-%m-%d] Starting scrape.\n"))
+write(log_path, "a+", time.strftime("[%T] Starting scrape.\n"))
 for link in table.find_all("a"):
 	paste = link.get("href")
 
@@ -66,7 +72,7 @@ for link in table.find_all("a"):
 	if paste in parsed_pastes: continue
 
 	write(parsed_path, "a+", paste + "\n")
-	write(log_path, "a+", time.strftime("[%Y-%m-%d] Reading " + paste + ".\n"))
+	write(log_path, "a+", time.strftime("[%T] Reading " + paste + ".\n"))
 
 	current_paste = requests.get(raw_paste_url + paste,
 			headers={"User-Agent": random.choice(request_agents)})
@@ -76,16 +82,18 @@ for link in table.find_all("a"):
 	for keyword in keywords:
 		if keyword.lower() in current_paste.text.lower():
 			write(log_path, "a+", "[{0}] Keyword < {1} > found in {2}!\n".format(
-						time.strftime("%Y-%m-%d"), keyword, paste))
+						time.strftime("%T"), keyword, paste))
 
 			dated_path = saves / time.strftime("%Y-%m-%d")
 			if dated_path.exists() == False:
 				dated_path.mkdir()
 				write(log_path, "a+", "[{0}] Making {1}...\n".format(
-							time.strftime("%Y-%m-%d"), dated_path))
+							time.strftime("%T"), dated_path))
 
 			with open(dated_path / Path(paste[1:] + ".txt"), "w+") as f:
 				f.write("[*] KEYWORD < {0} >\n".format(keyword))
 				f.write("-"*20 + "\n")
 				f.write(current_paste.text)
 			break
+
+write(log_path, "a+","\n" + "-" * 30 + "\n")
