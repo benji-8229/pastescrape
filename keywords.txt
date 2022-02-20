@@ -6,4 +6,7 @@ passwd
 gun
 Mono
 powershell
-invoke-
+invoke
+download
+token
+secret
