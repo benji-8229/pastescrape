@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import requests, time, random, json
+import requests, time, random, json, logging
 from bs4 import BeautifulSoup
 from pathlib import Path
 from sys import exit
@@ -8,8 +8,8 @@ raw_paste_url = "https://www.pastebin.com/raw"
 request_url = "https://www.pastebin.com/archive"
 
 #file paths that will be used
-file_path = Path(__file__).resolve().parent
-log_path = file_path / Path("saves/log.txt")
+file_path = Path()
+log_path = file_path / Path("saves/log.log")
 conf_path = file_path / Path("config.conf")
 parsed_path = file_path / Path(".parsed.txt")
 saves = file_path / Path("saves")
@@ -25,27 +25,28 @@ def write(path, mode, text):
 	with open(path, mode) as file:
 		file.write(text)
 
-#organize logs a bit
-write(log_path, "a+", "-" * 30 + "\n")
-write(log_path, "a+", time.strftime("\n[%D] Running pastescrape.py...\n"))
+#logging setup
+logging.basicConfig(filename=log_path, format="%(asctime)s %(levelname)s - %(message)s", level=logging.INFO, filemode="a")
+logging.info("pastescrape.py opened.")
 
 try:
 	conf_data = json.load(conf_path.open("r"))
 except ValueError:
 	#conf file empty, add fields and close
 	json.dump({"user_agents": [], "keywords": []}, conf_path.open("w+"))
-	write(log_path, "a+", time.strftime("[%T] Config file empty, closing...\n"))
-	exit()
+	logging.info("Creating config file.")
 
 keywords = conf_data["keywords"]
 if keywords == []:
-	write(log_path, "a+", time.strftime("[%T] Keywords file empty, closing.\n"))
+	logging.critical("Keywords empty, closing.")
 	exit()
 
 #I understand it doesn't look great to be using random user agents
 #to avoid being blocked. I would much rather use PasteBin's scraping
 #API, but that's for pro accounts. And they are "sold out" of those???
 request_agents = conf_data["user_agents"]
+if request_agents == []:
+	logging.warning("User-Agents empty, higher chance of being blocked.")
 
 #get a set of the pastes we've already read
 #use a set because the contains check is O(1) instead of O(n)
@@ -56,7 +57,7 @@ with open(parsed_path, "r+") as f:
 try:
 	requests.head("https://www.google.com", timeout=5)
 except requests.ConnectionError:
-	write(log_path, "a+", time.strftime("[%T] No internet connection, closing.\n"))
+	logging.critical("No internetion connection, closing.")
 	exit()
 
 #request the recent public pastes, and parse the html
@@ -64,36 +65,31 @@ request = requests.get(request_url, headers={"User-Agent": random.choice(request
 soup = BeautifulSoup(request.text, "html.parser")
 table = soup.find("div", class_="archive-table")
 
-write(log_path, "a+", time.strftime("[%T] Starting scrape.\n"))
+logging.info("Starting to scrape links.")
 for link in table.find_all("a"):
 	paste = link.get("href")
 
 	if paste.startswith("/archive"): continue
 	if paste in parsed_pastes: continue
 
-	write(parsed_path, "a+", paste + "\n")
-	write(log_path, "a+", time.strftime("[%T] Reading " + paste + ".\n"))
+	write(parsed_path, "a+", "{0}\n".format(paste))
+	current_paste = requests.get(raw_paste_url + paste, headers={"User-Agent": random.choice(request_agents)})
 
-	current_paste = requests.get(raw_paste_url + paste,
-			headers={"User-Agent": random.choice(request_agents)})
+	logging.info("Checking paste {0} for keywords.".format(paste))
 
 	#for every keyword in our list, check if it's in the current paste.
 	#if it is, save the paste and move to the next paste in the loop.
 	for keyword in keywords:
 		if keyword.lower() in current_paste.text.lower():
-			write(log_path, "a+", "[{0}] Keyword < {1} > found in {2}!\n".format(
-						time.strftime("%T"), keyword, paste))
-
+			logging.info("Keyword < {0} > found in paste {1}.".format(keyword, paste))
 			dated_path = saves / time.strftime("%Y-%m-%d")
 			if dated_path.exists() == False:
 				dated_path.mkdir()
-				write(log_path, "a+", "[{0}] Making {1}...\n".format(
-							time.strftime("%T"), dated_path))
-
+				logging.info("Creaing directory {0}.".format(dated_path))
 			with open(dated_path / Path(paste[1:] + ".txt"), "w+") as f:
 				f.write("[*] KEYWORD < {0} >\n".format(keyword))
 				f.write("-"*20 + "\n")
 				f.write(current_paste.text)
 			break
 
-write(log_path, "a+","\n" + "-" * 30 + "\n")
+logging.info("pastescrape.py finished running.\n")
