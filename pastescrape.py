@@ -9,7 +9,7 @@ request_url = "https://www.pastebin.com/archive"
 
 #file paths that will be used
 file_path = Path()
-log_path = file_path / Path("saves/log.log")
+log_path = file_path / Path("saves/log.txt")
 conf_path = file_path / Path("config.conf")
 parsed_path = file_path / Path(".parsed.txt")
 saves = file_path / Path("saves")
