@@ -8,10 +8,10 @@ raw_paste_url = "https://www.pastebin.com/raw"
 request_url = "https://www.pastebin.com/archive"
 
 #file paths that will be used
-file_path = Path()
+file_path = Path.cwd()
 log_path = file_path / Path("saves/log.txt")
 conf_path = file_path / Path("config.conf")
-parsed_path = file_path / Path(".parsed.txt")
+parsed_path = file_path / Path("saves/.parsed.txt")
 saves = file_path / Path("saves")
 
 #im so lazy :)
@@ -72,7 +72,7 @@ for link in table.find_all("a"):
 	if paste.startswith("/archive"): continue
 	if paste in parsed_pastes: continue
 
-	write(parsed_path, "a+", "{0}\n".format(paste))
+	write(parsed_path, "a+", f"{paste}\n")
 	current_paste = requests.get(raw_paste_url + paste, headers={"User-Agent": random.choice(request_agents)})
 
 	logging.info("Checking paste {0} for keywords.".format(paste))
@@ -81,13 +81,13 @@ for link in table.find_all("a"):
 	#if it is, save the paste and move to the next paste in the loop.
 	for keyword in keywords:
 		if keyword.lower() in current_paste.text.lower():
-			logging.info("Keyword < {0} > found in paste {1}.".format(keyword, paste))
+			logging.info(f"Keyword < {keyword} > found in paste {paste}.")
 			dated_path = saves / time.strftime("%Y-%m-%d")
 			if dated_path.exists() == False:
 				dated_path.mkdir()
-				logging.info("Creaing directory {0}.".format(dated_path))
-			with open(dated_path / Path(paste[1:] + ".txt"), "w+") as f:
-				f.write("[*] KEYWORD < {0} >\n".format(keyword))
+				logging.info(f"Creaing directory {dated_path}.")
+			with open(dated_path / Path(f"{keyword}_{paste[1:]}.txt"), "w+") as f:
+				f.write(f"[*] KEYWORD < {keyword} >\n")
 				f.write("-"*20 + "\n")
 				f.write(current_paste.text)
 			break
