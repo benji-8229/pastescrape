@@ -7,9 +7,9 @@ Simple curiosity. Lots of interesting things get posted to PasteBin, from drug d
 ### Installation and Setup
 1. Run `gh repo clone pastescrape`.
 
-2. Run `python pastescrape.py` to generate directories and files.
+2. Run `python pastescrape.py` once to generate config file.
 
-3. Configure `config.conf`, a sample is provided. Keywords are **not** case sensitive.
+3. Configure `config.conf`, a sample is provided. Keywords are **not** case sensitive. You must provide absolute paths.
 
 4. Schedule it to run automatically with a cronjob. Scheduling it for every 5-6 hours should be plenty, and the longer you wait the less likely you are to get blocked.
 
