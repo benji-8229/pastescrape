@@ -37,7 +37,6 @@ else:
     saves = Path(conf_data["saves_path"])
     log_path = Path(conf_data["logs_path"])
     parsed_path = saves / Path(".parsed.txt")
-
     if not saves.exists() or saves.is_file():
         print(f"[*] Directory {saves} does not exist or points to a file, closing.")
         exit(1)
