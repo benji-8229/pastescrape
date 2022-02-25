@@ -62,6 +62,7 @@ except requests.ConnectionError:
 
 #request the recent public pastes, and parse the html
 request = requests.get(request_url, headers={"User-Agent": random.choice(request_agents)})
+request.encoding = "utf-8"
 soup = BeautifulSoup(request.text, "html.parser")
 table = soup.find("div", class_="archive-table")
 
@@ -86,10 +87,10 @@ for link in table.find_all("a"):
 			if dated_path.exists() == False:
 				dated_path.mkdir()
 				logging.info(f"Creaing directory {dated_path}.")
-			with open(dated_path / Path(f"{keyword}_{paste[1:]}.txt"), "w+") as f:
-				f.write(f"[*] KEYWORD < {keyword} >\n")
-				f.write("-"*20 + "\n")
-				f.write(current_paste.text)
+			with open(dated_path / Path(f"{keyword}_{paste[1:]}.txt"), "wb+") as f:
+				f.write((f"[*] KEYWORD < {keyword} >\n").encode("utf"))
+				f.write(("-"*20 + "\n").encode("utf8"))
+				f.write(current_paste.text.encode("utf8"))
 			break
 
 logging.info("pastescrape.py finished running.\n")
