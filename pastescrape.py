@@ -76,17 +76,15 @@ if request_agents == []:
 with open(parsed_path, "r+") as f:
     parsed_pastes = set([paste.strip("\n") for paste in f.readlines()])
 
-# check to make sure there is internet
+# request the recent public pastes, and parse the html
 try:
-    requests.head("https://www.example.com", timeout=5)
+    request = requests.get(
+        request_url, headers={"User-Agent": random.choice(request_agents)}
+    )
 except requests.ConnectionError:
-    logging.critical("No internetion connection, closing.")
+    logging.critical("No internet connection, closing.")
     exit(1)
 
-# request the recent public pastes, and parse the html
-request = requests.get(
-    request_url, headers={"User-Agent": random.choice(request_agents)}
-)
 request.encoding = "utf-8"
 soup = BeautifulSoup(request.text, "html.parser")
 table = soup.find("div", class_="archive-table")
@@ -117,7 +115,8 @@ for link in table.find_all("a"):
                 dated_path.mkdir()
                 logging.info(f"Creaing directory {dated_path}.")
             with open(
-                dated_path / Path(f"{keyword}_{paste[1:]}.txt"), "w+", encoding="utf8") as f:
+                dated_path / Path(f"{keyword}_{paste[1:]}.txt"), "w+", encoding="utf8"
+            ) as f:
                 f.write(f"[*] KEYWORD < {keyword} >\n")
                 f.write(("-" * 20 + "\n"))
                 f.write(current_paste.text)
