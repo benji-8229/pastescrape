@@ -1,15 +1,15 @@
 # pastescrape
-`pastescrape` is a simple script to regularly read recent, public pastes on pastebin and save anything interesting.
+`pastescrape` is a simple script designed to run 24/7, regularly read recent public pastes on pastebin, and save anything interesting.
 
 ### Why?
-Simple curiosity. Lots of interesting things get posted to PasteBin, from drug dealer's menus to malware. I am interested in documenting and recording the interesting things that would otherwise go unnoticed.
+Simple curiosity. Lots of things get posted to PasteBin, from malware to game development scripts to complete junk. Why not archive the interesting stuff?
 
 ### Installation and Setup
 1. Run `gh repo clone pastescrape`.
 
 2. Run `python pastescrape.py` once to generate config file.
 
-3. Configure `config.conf`, a sample is provided. Keywords are **not** case sensitive. You must provide absolute paths. Pastescrape will **not** create the directories for you, and it will not run without them.
+3. Configure `config.conf`, a sample is provided. Keywords are not case sensitive. You must provide absolute paths. Pastescrape will **not** create the directories for you, and it will not run without them.
 
 4. Run `python pastescrape.py` once manually to make sure everything is configured correctly.
 
