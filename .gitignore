@@ -1,6 +1,6 @@
 **/saves
-**.csv
-**.cfg
-.parsed.txt
-log.txt
-/__pycache__
+**/*.csv
+**/*.cfg
+**/*.cache
+**/*.txt
+**/__pycache__
