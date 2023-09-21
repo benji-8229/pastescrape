@@ -1,5 +1,6 @@
 **/saves
 **.csv
+**.cfg
 .parsed.txt
 log.txt
 /__pycache__
