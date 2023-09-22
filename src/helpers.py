@@ -52,7 +52,7 @@ class Helpers:
         return contents
 
     @staticmethod
-    def get_cache():
+    def cache_get():
         if not Path.exists(Helpers.CACHE_PATH):
             with open(Helpers.CACHE_PATH, "w") as cache_file:
                     json.dump({"cache": []}, cache_file)
@@ -61,17 +61,36 @@ class Helpers:
             return json.load(cache_file)
         
     @staticmethod
-    def append_cache(id):
-        cache = Helpers.get_cache()["cache"]
-        if id in cache:
+    def cache_append(id):
+        cache = Helpers.cache_get()
+
+        if id in cache["cache"]:
             return
-        elif len(cache) > 50:
-            cache.pop(0)
+        elif len(cache["cache"]) > 50:
+            cache["cache"].pop(0)
         
-        cache.append(id)
-        Helpers.dump_cache(cache)
+        cache["cache"].append(id)
+        Helpers.cache_dump(cache)
+        
+    @staticmethod 
+    def cache_append_many(ids):
+        cache = Helpers.cache_get()
+
+        for id in ids:
+            if id in cache["cache"]:
+                continue
+            elif len(cache["cache"]) > 50:
+                cache["cache"].pop(0)
+                
+            cache["cache"].append(id)
+             
+        Helpers.cache_dump(cache)
     
     @staticmethod
-    def dump_cache(obj):
+    def cache_dump(obj):
         with open(Helpers.CACHE_PATH, "w") as cache_file:
             json.dump(obj, cache_file)
+    
+    @staticmethod 
+    def cache_check(id):
+        return id in Helpers.cache_get()["cache"]
