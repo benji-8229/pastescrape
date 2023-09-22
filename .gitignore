@@ -4,3 +4,4 @@
 **/*.cache
 **/*.txt
 **/__pycache__
+**/datasets
