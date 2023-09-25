@@ -18,15 +18,6 @@ db = client[config["db_name"]]
 archive = db[config["db_collection_name"]]
 
 
-def db_conn():
-    try:
-        client.admin.command("ping")
-    except ConnectionFailure:
-        return False
-    
-    return True
-
-
 @router.get("/insert/{id}")
 async def db_insert(id):
     id = id.strip()
