@@ -3,12 +3,14 @@ from pathlib import Path
 
 
 class Helpers:
-    CONFIG_PATH = Path("config.cfg")
-    CACHE_PATH = Path("CACHE.cache")
+    CONFIG_PATH = Path(__file__).resolve().parent / Path("jnk") / Path("config.cfg")
+    CACHE_PATH = Path(__file__).resolve().parent / Path("jnk") / Path("CACHE.cache")
     CONFIG_STRUCT = {"logging": "verbose/vital",
                      "log_path": "log.txt",
                      "refresh_interval": 60 * 5,
-                     "db_uri": ""
+                     "db_uri": "",
+                     "db_name": "",
+                     "db_collection_name": ""
                      }
     MONTH_MAP = {"January": 1,
                 "February": 2,
@@ -37,7 +39,7 @@ class Helpers:
         return f"{month}/{day}/{year} {stamp}"
 
     @staticmethod
-    def validate_config():
+    def config_get():
         if not Path.exists(Helpers.CONFIG_PATH):
             with open(Helpers.CONFIG_PATH, "w") as config_file:
                 config_file.write(json.dumps(Helpers.CONFIG_STRUCT, indent=4))

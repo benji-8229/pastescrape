@@ -19,10 +19,23 @@ class Scraping:
     @staticmethod
     def get_header():
         return {"User-Agent": choice(Scraping.U_AGENTS)}
-
+    
+    @staticmethod
+    def is_valid_id(id):
+        id = id.strip("/").strip()
+        if len(id) != 8:
+            return False
+        
+        content = requests.get(f"{Scraping.BASE_DOM}/{id}", headers=Scraping.get_header())
+        soup = BeautifulSoup(content.text, features="html.parser")
+        title = soup.find("div", class_="content__title")
+        
+        return title != None and title.contents[0] != "Not Found (#404)"
+            
+        
     @staticmethod
     def scrape_paste_content(id, use_cache=True):
-        id = id.strip("/")
+        id = id.strip("/").strip()
         
         if use_cache:
             if Helpers.cache_check(id):
