@@ -1,8 +1,9 @@
 from helpers import Helpers
 from scraping import Scraping
-from fastapi import APIRouter
-from fastapi import HTTPException
+from typing import Optional
+from json import loads, dumps
 
+from fastapi import APIRouter, HTTPException
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pymongo.errors import ConnectionFailure
@@ -125,6 +126,35 @@ async def db_fetch(id: str) -> dict:
             raise HTTPException(status_code=404, detail=f"Paste ID {id} not found in DB")
     except ConnectionFailure:
         raise HTTPException(status_code=504, detail=f"Database request timed out")
+
+
+@router.get("/fetch_many", summary=f"Retrieve {config['fetch_many_lim']} pastes from the database, with easy recursion to retrieve the entire database", response_model=None)
+async def db_fetch_many(filter: Optional[str] = "null", ind: Optional[int] = 0, limit: Optional[int] = config["fetch_many_lim"]):
+    try:
+        if filter != "null":
+            print(filter)
+            filter = loads(filter)
+            data = collection.find(filter).sort("_id", -1)[ind:]
+        else:
+            data = collection.find().sort("_id", -1)[ind:]
+    except ConnectionFailure:
+        raise HTTPException(status_code=504, detail=f"Database request timed out")
+            
+            
+    if not ind == 0:
+        ind /= limit
+        
+    ret_list = []
+    
+    for x in data:
+        if "_id" in x:
+            x["_id"] = str(x["_id"])
+        ret_list.append(x)
+        
+        if len(ret_list) >= limit:
+            break
+
+    return {"cur_list": ret_list, "next_request": f"http://localhost:8000/api/db/fetch_many?filter={dumps(filter) if filter != 'null' else 'null'}&limit={limit}&ind={int((ind+1) * limit)}"}
 
 
 @router.get("/status", summary="Check if connection to database is alive")
