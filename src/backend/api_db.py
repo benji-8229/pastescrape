@@ -27,8 +27,8 @@ async def db_insert(id: str) -> dict:
         id (str): The id of the paste to insert or replace
 
     Raises:\n
-        HTTPException 400: Paste ID provided was not valid
-        HTTPException 422: Paste ID was valid but could not be scraped
+        HTTPException 400: Paste ID provided was not valid\n
+        HTTPException 422: Paste ID was valid but could not be scraped\n
         HTTPException 504: Connection to database dead\n
 
     Returns:\n
@@ -69,8 +69,8 @@ async def db_insert_latest():
         HTTPException 504: Connection to database dead\n
 
     Returns:\n
-        pastes_added (int): The amount of pastes added to the db
-        ids_added (list of tuples): List of tuples for every added paste where element 0 is the paste ID and element 1 is the _id (db id) 
+        pastes_added (int): The amount of pastes added to the db\n
+        ids_added (list of tuples): List of tuples for every added paste where element 0 is the paste ID and element 1 is the _id (db id)\n
     """
     ids = Scraping.scrape_ids()
     added_ids = []
