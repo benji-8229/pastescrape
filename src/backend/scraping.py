@@ -21,29 +21,31 @@ class Scraping:
         return {"User-Agent": choice(Scraping.U_AGENTS)}
     
     @staticmethod
-    def is_valid_id(id):
+    def is_valid_id(id, check_404=True):
         id = id.strip("/").strip()
+        
         if len(id) != 8:
             return False
+        elif not id.isalnum():
+            return False
         
-        content = requests.get(f"{Scraping.BASE_DOM}/{id}", headers=Scraping.get_header())
-        soup = BeautifulSoup(content.text, features="html.parser")
-        title = soup.find("div", class_="content__title")
-        
-        return title != None and title.contents[0] != "Not Found (#404)"
+        if check_404:
+            content = requests.get(f"{Scraping.BASE_DOM}/{id}", headers=Scraping.get_header())
+            soup = BeautifulSoup(content.text, features="html.parser")
+            title = soup.find("div", class_="content__title")
             
-        
+            return title != None and title.contents[0] != "Not Found (#404)"
+        else:
+            return True
+            
     @staticmethod
-    def scrape_paste_content(id, use_cache=True):
+    def scrape_paste_content(id):
         id = id.strip("/").strip()
-        
-        if use_cache:
-            if Helpers.cache_check(id):
-                return None
-            else:
-                Helpers.cache_append(id)
-        
+
         data = {"text": "", "title": "Untitled", "language": "", "time": "", "user": "Guest", "tags": "", "id": id}
+        
+        if not Scraping.is_valid_id(id):
+            return data
         
         # it is painful to extract the text from the pastebin page, so we request the raw page aswell
         raw_content = requests.get(f"{Scraping.BASE_DOM}/raw/{id}", headers=Scraping.get_header())
@@ -70,7 +72,6 @@ class Scraping:
     def scrape_ids():
         # In a perfect world we would integrate with the PasteBin premium API for our scraping, but they haven't sold those accounts in years.
         content = requests.get(Scraping.SCRAPE_URL, headers=Scraping.get_header())
-        cache = Helpers.cache_get()
         
         # implement connection tests and retry logic here
         match content.status_code:
@@ -80,8 +81,8 @@ class Scraping:
         soup = BeautifulSoup(content.text, features="html.parser")
         
         # for every link in the soup, add the link to ids if the link matches the re pattern
-        ids = set([x["href"] for x in soup.find_all("a", href=True) if re.match(r"^/([A-Za-z0-9_.]{8})$", x["href"])])
+        id_list = [x["href"].strip("/") for x in soup.find_all("a", href=True) if re.match(r"^/([A-Za-z0-9_.]{8})$", x["href"])]
 
-        return ids
+        return set(id_list)
     
     
